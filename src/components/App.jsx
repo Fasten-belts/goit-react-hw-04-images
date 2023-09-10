@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useState, useEffect } from 'react';
 import { fetchImages } from 'services/api';
 import { SearchBar } from './SearchBar/SearchBar';
 import { GlobalStyle } from './GlobalStyle';
@@ -8,32 +8,27 @@ import { Loader } from './Loader/Loader';
 import { Button } from './Button/Button';
 import { Layout } from './Layout';
 
-export class App extends Component {
-  state = {
-    query: '',
-    images: [],
-    page: 1,
-    totalHits: 0,
-    loading: false,
-    error: false,
-  };
+function App() {
+  const [query, setQuery] = useState('');
+  const [images, setImages] = useState([]);
+  const [page, setPage] = useState(1);
+  const [totalHits, setTotalHits] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
 
-  componentDidUpdate(prevProps, prevState) {
-    if (
-      this.state.query !== prevState.query ||
-      this.state.page !== prevState.page
-    ) {
-      this.upLoadImages();
+  useEffect(() => {
+    if (!query) {
+      return;
     }
-  }
 
-  upLoadImages = async () => {
+    upLoadImages();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query, page]);
+
+  async function upLoadImages() {
     try {
-      this.setState({ loading: true });
-      const { hits, totalHits } = await fetchImages(
-        this.state.query,
-        this.state.page
-      );
+      setLoading(true);
+      const { hits, totalHits } = await fetchImages(query, page);
       if (!totalHits) {
         toast.error(
           'Sorry, nothing was found for your request, please try something else.',
@@ -44,57 +39,50 @@ export class App extends Component {
         return;
       }
 
-      this.setState(prevState => ({
-        images: [...prevState.images, ...hits],
-        totalHits,
-      }));
+      setImages(prevImages => [...prevImages, ...hits]);
+      setTotalHits(totalHits);
 
-      if (this.state.images.length < 12) {
-        return toast.success(`Hooray! We found ${totalHits} images.`, {
+      if (images.length < 12) {
+        toast.success(`Hooray! We found ${totalHits} images.`, {
           icon: '👏',
         });
       }
     } catch (error) {
-      this.setState({ error: true });
+      setError(true);
       toast.error('Oops, something went wrong.Please try again later.', {
         icon: '🆘',
       });
     } finally {
-      this.setState({ loading: false, error: false });
+      setLoading(false);
+      setError(false);
     }
-  };
-
-  handleSubmit = value => {
-    this.setState({
-      query: `${value}`,
-      images: [],
-      page: 1,
-    });
-  };
-
-  handleLoadMore = () => {
-    this.setState(prevState => ({
-      page: prevState.page + 1,
-    }));
-  };
-
-  render() {
-    const { loading, totalHits, images } = this.state;
-    const pages = totalHits / 12;
-    const loadMore = this.handleLoadMore;
-    const onSubmit = this.handleSubmit;
-
-    return (
-      <Layout>
-        <SearchBar onSubmit={onSubmit} />
-        {loading && <Loader />}
-        {totalHits > 0 && <ImageGallery images={images} />}
-        {totalHits > 0 && pages > 1 && !loading && (
-          <Button onLoadMore={loadMore} />
-        )}
-        <GlobalStyle />
-        <Toaster position="top-right" reverseOrder={true} />
-      </Layout>
-    );
   }
+
+  function handleSubmit(value) {
+    setQuery(value);
+    setImages([]);
+    setPage(1);
+    setError(error);
+  }
+
+  function handleLoadMore() {
+    setPage(prevPage => prevPage + 1);
+  }
+
+  const pages = Math.ceil(totalHits / images.length);
+
+  return (
+    <Layout>
+      <SearchBar onSubmit={handleSubmit} />
+      {loading && <Loader />}
+      {images.length > 0 && <ImageGallery images={images} />}
+      {images.length > 0 && pages > 1 && !loading && (
+        <Button onLoadMore={handleLoadMore} />
+      )}
+      <GlobalStyle />
+      <Toaster position="top-right" reverseOrder={true} />
+    </Layout>
+  );
 }
+
+export { App };

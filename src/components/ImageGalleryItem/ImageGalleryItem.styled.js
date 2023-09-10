@@ -1,14 +1,15 @@
 import styled from 'styled-components';
 
 export const ImageGalleryPart = styled.li`
-  border-radius: 2px;
-  box-shadow: 0px 1px 3px 0px rgba(0, 0, 0, 0.2),
-    0px 1px 1px 0px rgba(0, 0, 0, 0.14), 0px 2px 1px -1px rgba(0, 0, 0, 0.12);
-  transition: transform 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  flex-basis: calc((100% - 16px * 2) / 3);
+  box-shadow: 0px 1px 6px rgba(46, 47, 66, 0.08),
+    0px 1px 1px rgba(46, 47, 66, 0.16), 0px 2px 1px rgba(46, 47, 66, 0.08);
+  border-radius: 0px 0px 4px 4px;
 
-  :hover {
-    transform: scale(1.03);
-    cursor: zoom-in;
+  transition: transform ease-in 400ms;
+
+  &:is(:hover, :focus) {
+    transform: scale(1.05);
   }
 `;
 
