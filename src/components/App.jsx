@@ -21,42 +21,41 @@ function App() {
       return;
     }
 
-    upLoadImages();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, page]);
+    async function upLoadImages() {
+      try {
+        setLoading(true);
+        const { hits, totalHits } = await fetchImages(query, page);
+        if (!totalHits) {
+          toast.error(
+            'Sorry, nothing was found for your request, please try something else.',
+            {
+              icon: '🫣',
+            }
+          );
+          return;
+        }
 
-  async function upLoadImages() {
-    try {
-      setLoading(true);
-      const { hits, totalHits } = await fetchImages(query, page);
-      if (!totalHits) {
-        toast.error(
-          'Sorry, nothing was found for your request, please try something else.',
-          {
-            icon: '🫣',
-          }
-        );
-        return;
-      }
+        setImages(prevImages => [...prevImages, ...hits]);
+        setTotalHits(totalHits);
 
-      setImages(prevImages => [...prevImages, ...hits]);
-      setTotalHits(totalHits);
-
-      if (images.length < 12) {
-        toast.success(`Hooray! We found ${totalHits} images.`, {
-          icon: '👏',
+        if (page === 1) {
+          toast.success(`Hooray! We found ${totalHits} images.`, {
+            icon: '👏',
+          });
+        }
+      } catch (error) {
+        setError(true);
+        toast.error('Oops, something went wrong.Please try again later.', {
+          icon: '🆘',
         });
+      } finally {
+        setLoading(false);
+        setError(false);
       }
-    } catch (error) {
-      setError(true);
-      toast.error('Oops, something went wrong.Please try again later.', {
-        icon: '🆘',
-      });
-    } finally {
-      setLoading(false);
-      setError(false);
     }
-  }
+
+    upLoadImages();
+  }, [query, page]);
 
   function handleSubmit(value) {
     setQuery(value);
